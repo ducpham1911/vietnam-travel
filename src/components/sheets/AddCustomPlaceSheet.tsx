@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { ThumbnailPicker } from "@/components/ui/ThumbnailPicker";
 import { createCustomPlace } from "@/db/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 import { isCustomCityRef, parseCustomCityRef } from "@/lib/customRefs";
 import { categories } from "@/data/categories";
 
@@ -23,6 +24,7 @@ interface AddCustomPlaceSheetProps {
 }
 
 export function AddCustomPlaceSheet({ open, onClose, cityRef, cityCoords }: AddCustomPlaceSheetProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<"form" | "location">("form");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("landmark");
@@ -40,20 +42,20 @@ export function AddCustomPlaceSheet({ open, onClose, cityRef, cityCoords }: AddC
   };
 
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !user) return;
     await createCustomPlace({
+      user_id: user.id,
       name: name.trim(),
-      categoryRawValue: category,
-      placeDescription: description.trim(),
+      category_raw_value: category,
+      place_description: description.trim(),
       address: address.trim(),
-      cityId: isCustomCity ? "" : cityRef,
-      customCityId,
-      isCustomCity,
+      city_id: isCustomCity ? "" : cityRef,
+      custom_city_id: customCityId,
+      is_custom_city: isCustomCity,
       lat: coords?.lat,
       lng: coords?.lng,
       thumbnail: thumbnail ?? undefined,
-      recommendedDishes: [],
-      createdAt: new Date().toISOString(),
+      recommended_dishes: [],
     });
     resetAndClose();
   };

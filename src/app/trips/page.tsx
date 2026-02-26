@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Briefcase, Users, LogIn, LogOut } from "lucide-react";
-import { useTrips } from "@/db/hooks";
-import { useSharedTrips } from "@/db/shared-hooks";
+import { Plus, Briefcase, Users, LogIn, LogOut, Share2 } from "lucide-react";
+import { useTrips, useTripMembers } from "@/db/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CreateTripSheet } from "@/components/sheets/CreateTripSheet";
-import { CreateSharedTripSheet } from "@/components/sheets/CreateSharedTripSheet";
-import type { TripPlan } from "@/types/trip";
+import { useMigrateLocalData } from "@/db/migration";
 
 function SharedTripBadge() {
   return (
@@ -21,22 +19,53 @@ function SharedTripBadge() {
   );
 }
 
+function TripCardWithBadge({ trip }: { trip: Parameters<typeof TripCard>[0]["trip"] }) {
+  const members = useTripMembers(trip.id);
+  const isShared = members.length > 1;
+  return <TripCard trip={trip} badge={isShared ? <SharedTripBadge /> : undefined} />;
+}
+
 export default function TripsPage() {
-  const trips = useTrips();
   const { user, profile, loading: authLoading, signOut } = useAuth();
-  const sharedTrips = useSharedTrips();
+  const trips = useTrips();
   const [showCreate, setShowCreate] = useState(false);
-  const [showCreateShared, setShowCreateShared] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const isLoggedIn = !!user && !authLoading;
-  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Run one-time data migration from Dexie
+  useMigrateLocalData();
+
+  // Redirect to login if not logged in
+  if (!authLoading && !user) {
+    return (
+      <div className="px-4 pt-4">
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold">My Trips</h1>
+          <p className="text-sm text-text-secondary">Plan your Vietnam adventure</p>
+        </div>
+        <EmptyState
+          icon={LogIn}
+          title="Sign in to get started"
+          description="Sign in to create trips and plan your Vietnam adventure"
+          action={
+            <Link
+              href="/login"
+              className="rounded-xl bg-brand-teal px-6 py-2.5 text-sm font-semibold inline-block"
+            >
+              Sign In
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pt-4">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          {/* Avatar / Login button */}
           {isLoggedIn ? (
             <div className="relative">
               <button
@@ -61,13 +90,6 @@ export default function TripsPage() {
                 </div>
               )}
             </div>
-          ) : !authLoading ? (
-            <Link
-              href="/login"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-bg"
-            >
-              <LogIn size={16} className="text-text-tertiary" />
-            </Link>
           ) : null}
           <div>
             <h1 className="text-2xl font-bold">My Trips</h1>
@@ -75,7 +97,7 @@ export default function TripsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {(trips.length > 0 || sharedTrips.length > 0) && (
+          {trips.length > 0 && (
             <button
               onClick={() => setShowCreate(true)}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-teal"
@@ -86,71 +108,14 @@ export default function TripsPage() {
         </div>
       </div>
 
-      {/* Shared Trips Section */}
-      {isLoggedIn && sharedTrips.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Users size={16} className="text-brand-teal" />
-              <h2 className="text-lg font-semibold">Shared Trips</h2>
-            </div>
-            <button
-              onClick={() => setShowCreateShared(true)}
-              className="text-xs font-medium text-brand-teal"
-            >
-              + New
-            </button>
-          </div>
-          <div className="flex flex-col gap-3">
-            {sharedTrips.map((st) => {
-              const tripForCard: TripPlan = {
-                id: 0,
-                name: st.name,
-                startDate: st.start_date,
-                endDate: st.end_date,
-                notes: st.notes,
-                cityIds: st.city_ids,
-                createdAt: st.created_at,
-              };
-              return (
-                <TripCard
-                  key={st.id}
-                  trip={tripForCard}
-                  href={`/trips/shared/${st.id}`}
-                  badge={<SharedTripBadge />}
-                />
-              );
-            })}
-          </div>
+      {/* Trips List */}
+      {trips.length > 0 ? (
+        <div className="flex flex-col gap-3 pb-4">
+          {trips.map((trip) => (
+            <TripCardWithBadge key={trip.id} trip={trip} />
+          ))}
         </div>
-      )}
-
-      {/* Create shared trip button when logged in but no shared trips */}
-      {isLoggedIn && sharedTrips.length === 0 && (
-        <button
-          onClick={() => setShowCreateShared(true)}
-          className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-brand-teal/30 py-3 text-sm font-medium text-brand-teal"
-        >
-          <Users size={16} />
-          Create Shared Trip
-        </button>
-      )}
-
-      {/* Local Trips Section */}
-      {trips.length > 0 && (
-        <>
-          {isLoggedIn && (
-            <h2 className="text-lg font-semibold mb-3">Local Trips</h2>
-          )}
-          <div className="flex flex-col gap-3 pb-4">
-            {trips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
-          </div>
-        </>
-      )}
-
-      {trips.length === 0 && sharedTrips.length === 0 && (
+      ) : (
         <EmptyState
           icon={Briefcase}
           title="No trips yet"
@@ -167,12 +132,6 @@ export default function TripsPage() {
       )}
 
       <CreateTripSheet open={showCreate} onClose={() => setShowCreate(false)} />
-      {isLoggedIn && (
-        <CreateSharedTripSheet
-          open={showCreateShared}
-          onClose={() => setShowCreateShared(false)}
-        />
-      )}
     </div>
   );
 }

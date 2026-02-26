@@ -3,7 +3,7 @@ import type { CustomCity, CustomPlace } from "@/types/trip";
 import { getCityById } from "@/data/cities";
 import { getPlaceById } from "@/data/places";
 import { cityCoordinates, placeCoordinates } from "@/data/coordinates";
-import { db } from "@/db/db";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   isCustomCityRef,
   parseCustomCityRef,
@@ -14,7 +14,7 @@ import {
 } from "./customRefs";
 
 export interface ResolvedCity {
-  id: string; // static id or "cc:N"
+  id: string; // static id or "cc:UUID"
   name: string;
   region: string;
   description: string;
@@ -22,13 +22,13 @@ export interface ResolvedCity {
   imageAsset: string | null;
   thumbnail: string | null;
   isCustom: boolean;
-  customId?: number;
+  customId?: string;
   lat?: number;
   lng?: number;
 }
 
 export interface ResolvedPlace {
-  id: string; // static id or "cp:N"
+  id: string; // static id or "cp:UUID"
   name: string;
   category: PlaceCategory;
   description: string;
@@ -39,7 +39,7 @@ export interface ResolvedPlace {
   recommendedDishes: string[];
   thumbnail: string | null;
   isCustom: boolean;
-  customId?: number;
+  customId?: string;
   lat?: number;
   lng?: number;
 }
@@ -61,12 +61,14 @@ export function resolveStaticCity(city: City): ResolvedCity {
 }
 
 export function resolveCustomCityObj(cc: CustomCity): ResolvedCity {
+  // Generate a stable gradient index from the UUID
+  const hashCode = cc.id.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
   return {
-    id: toCustomCityRef(cc.id!),
+    id: toCustomCityRef(cc.id),
     name: cc.name,
     region: cc.region,
-    description: cc.cityDescription,
-    gradientIndex: cc.id! % 10,
+    description: cc.city_description,
+    gradientIndex: Math.abs(hashCode) % 10,
     imageAsset: null,
     thumbnail: cc.thumbnail ?? null,
     isCustom: true,
@@ -78,9 +80,14 @@ export function resolveCustomCityObj(cc: CustomCity): ResolvedCity {
 
 export async function resolveCityRef(ref: string): Promise<ResolvedCity | undefined> {
   if (isCustomCityRef(ref)) {
-    const numId = parseCustomCityRef(ref);
-    const cc = await db.customCities.get(numId);
-    return cc ? resolveCustomCityObj(cc) : undefined;
+    const uuid = parseCustomCityRef(ref);
+    const supabase = getSupabaseBrowserClient();
+    const { data: cc } = await supabase
+      .from("custom_cities")
+      .select("*")
+      .eq("id", uuid)
+      .single();
+    return cc ? resolveCustomCityObj(cc as CustomCity) : undefined;
   }
   const city = getCityById(ref);
   return city ? resolveStaticCity(city) : undefined;
@@ -106,19 +113,19 @@ export function resolveStaticPlace(place: Place): ResolvedPlace {
 }
 
 export function resolveCustomPlaceObj(cp: CustomPlace): ResolvedPlace {
-  const cityRef = cp.isCustomCity && cp.customCityId
-    ? toCustomCityRef(cp.customCityId)
-    : cp.cityId;
+  const cityRef = cp.is_custom_city && cp.custom_city_id
+    ? toCustomCityRef(cp.custom_city_id)
+    : cp.city_id;
   return {
-    id: toCustomPlaceRef(cp.id!),
+    id: toCustomPlaceRef(cp.id),
     name: cp.name,
-    category: (cp.categoryRawValue || "landmark") as PlaceCategory,
-    description: cp.placeDescription,
+    category: (cp.category_raw_value || "landmark") as PlaceCategory,
+    description: cp.place_description,
     address: cp.address,
     cityRef,
     rating: null,
     priceLevel: null,
-    recommendedDishes: cp.recommendedDishes,
+    recommendedDishes: cp.recommended_dishes,
     thumbnail: cp.thumbnail ?? null,
     isCustom: true,
     customId: cp.id,
@@ -129,9 +136,14 @@ export function resolveCustomPlaceObj(cp: CustomPlace): ResolvedPlace {
 
 export async function resolvePlaceRef(ref: string): Promise<ResolvedPlace | undefined> {
   if (isCustomPlaceRef(ref)) {
-    const numId = parseCustomPlaceRef(ref);
-    const cp = await db.customPlaces.get(numId);
-    return cp ? resolveCustomPlaceObj(cp) : undefined;
+    const uuid = parseCustomPlaceRef(ref);
+    const supabase = getSupabaseBrowserClient();
+    const { data: cp } = await supabase
+      .from("custom_places")
+      .select("*")
+      .eq("id", uuid)
+      .single();
+    return cp ? resolveCustomPlaceObj(cp as CustomPlace) : undefined;
   }
   const place = getPlaceById(ref);
   return place ? resolveStaticPlace(place) : undefined;

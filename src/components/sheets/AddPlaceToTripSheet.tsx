@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useTrips, useDayPlans, addPlaceVisit } from "@/db/hooks";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/db/db";
-import { TripPlan, DayPlan } from "@/types/trip";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Trip, DayPlan } from "@/types/trip";
 import { formatDateRange, formatDate } from "@/lib/utils";
 
 interface AddPlaceToTripSheetProps {
@@ -17,31 +17,30 @@ interface AddPlaceToTripSheetProps {
 }
 
 export function AddPlaceToTripSheet({ open, onClose, placeId, placeName }: AddPlaceToTripSheetProps) {
+  const { user } = useAuth();
   const trips = useTrips();
   const [step, setStep] = useState<"trip" | "day">("trip");
-  const [selectedTrip, setSelectedTrip] = useState<TripPlan | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const dayPlans = useDayPlans(selectedTrip?.id);
 
-  const handleSelectTrip = (trip: TripPlan) => {
+  const handleSelectTrip = (trip: Trip) => {
     setSelectedTrip(trip);
     setStep("day");
   };
 
   const handleSelectDay = async (dayPlan: DayPlan) => {
-    const existingVisits = await db.placeVisits
-      .where("dayPlanId")
-      .equals(dayPlan.id!)
-      .count();
+    // Get current visit count for ordering
+    const supabase = getSupabaseBrowserClient();
+    const { count } = await supabase
+      .from("place_visits")
+      .select("*", { count: "exact", head: true })
+      .eq("day_plan_id", dayPlan.id);
+
     await addPlaceVisit({
-      dayPlanId: dayPlan.id!,
-      placeId,
-      timeSlot: "",
-      notes: "",
-      isVisited: false,
-      orderIndex: existingVisits,
-      startTime: null,
-      endTime: null,
-      selectedDishes: [],
+      day_plan_id: dayPlan.id,
+      place_id: placeId,
+      order_index: count ?? 0,
+      added_by: user?.id ?? null,
     });
     resetAndClose();
   };
@@ -69,7 +68,7 @@ export function AddPlaceToTripSheet({ open, onClose, placeId, placeName }: AddPl
               >
                 <p className="text-sm font-semibold">{trip.name}</p>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  {formatDateRange(trip.startDate, trip.endDate)}
+                  {formatDateRange(trip.start_date, trip.end_date)}
                 </p>
               </button>
             ))
@@ -95,10 +94,10 @@ export function AddPlaceToTripSheet({ open, onClose, placeId, placeName }: AddPl
                 className="flex items-center gap-3 rounded-xl bg-surface-bg p-3 text-left"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-teal/20 text-sm font-bold text-brand-teal">
-                  {dp.dayNumber}
+                  {dp.day_number}
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Day {dp.dayNumber}</p>
+                  <p className="text-sm font-medium">Day {dp.day_number}</p>
                   <p className="text-xs text-text-secondary">{formatDate(dp.date, "long").split(",")[0]}</p>
                 </div>
               </button>

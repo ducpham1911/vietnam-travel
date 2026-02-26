@@ -24,7 +24,7 @@ import { PlaceVisitRow } from "@/components/trips/PlaceVisitRow";
 import { AddPlaceToDaySheet } from "@/components/sheets/AddPlaceToDaySheet";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PlaceVisit } from "@/types/trip";
+import type { PlaceVisit } from "@/types/trip";
 
 function SortableVisitItem({
   visit,
@@ -40,7 +40,7 @@ function SortableVisitItem({
   onMoveDown: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: visit.id!,
+    id: visit.id,
   });
 
   const style = {
@@ -76,10 +76,9 @@ function SortableVisitItem({
 
 export default function DayPlanPage() {
   const { tripId, dayNumber } = useParams<{ tripId: string; dayNumber: string }>();
-  const numTripId = Number(tripId);
   const numDay = Number(dayNumber);
-  const trip = useTrip(numTripId);
-  const dayPlan = useDayPlan(numTripId, numDay);
+  const trip = useTrip(tripId);
+  const dayPlan = useDayPlan(tripId, numDay);
   const visits = usePlaceVisits(dayPlan?.id);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -95,7 +94,9 @@ export default function DayPlanPage() {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= newVisits.length) return;
     [newVisits[index], newVisits[swapIndex]] = [newVisits[swapIndex], newVisits[index]];
-    await reorderVisits(dayPlan.id!, newVisits);
+    await reorderVisits(
+      newVisits.map((v, i) => ({ id: v.id, order_index: i }))
+    );
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -107,7 +108,9 @@ export default function DayPlanPage() {
     const newVisits = [...visits];
     const [moved] = newVisits.splice(oldIndex, 1);
     newVisits.splice(newIndex, 0, moved);
-    await reorderVisits(dayPlan.id!, newVisits);
+    await reorderVisits(
+      newVisits.map((v, i) => ({ id: v.id, order_index: i }))
+    );
   };
 
   return (
@@ -118,7 +121,7 @@ export default function DayPlanPage() {
       <div className="mx-4 mb-4 card-style p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Day {dayPlan.dayNumber}</h1>
+            <h1 className="text-2xl font-bold">Day {dayPlan.day_number}</h1>
             <p className="text-sm text-text-secondary mt-0.5">
               {formatDate(dayPlan.date, "long")}
             </p>
@@ -158,7 +161,7 @@ export default function DayPlanPage() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={visits.map((v) => v.id!)}
+                items={visits.map((v) => v.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="pb-2">
@@ -192,8 +195,8 @@ export default function DayPlanPage() {
       <AddPlaceToDaySheet
         open={showAdd}
         onClose={() => setShowAdd(false)}
-        dayPlanId={dayPlan.id!}
-        cityIds={trip.cityIds}
+        dayPlanId={dayPlan.id}
+        cityIds={trip.city_ids}
         nextOrderIndex={visits.length}
       />
     </div>

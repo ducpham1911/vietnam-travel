@@ -27,6 +27,7 @@ export function CityCard({ city, placeCount }: CityCardProps) {
               src={`/images/cities/${city.imageAsset}.png`}
               alt={city.name}
               fill
+              sizes="50vw"
               className="object-cover"
             />
           ) : (

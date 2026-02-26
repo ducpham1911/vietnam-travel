@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/utils";
 
 interface DayCardProps {
   dayPlan: DayPlan;
-  tripId: number | string;
+  tripId: string;
   placeCount: number;
   visitedCount: number;
   href?: string;
@@ -17,18 +17,18 @@ export function DayCard({ dayPlan, tripId, placeCount, visitedCount, href }: Day
   const hasPlaces = placeCount > 0;
 
   return (
-    <Link href={href ?? `/trips/${tripId}/days/${dayPlan.dayNumber}`} className="block">
+    <Link href={href ?? `/trips/${tripId}/days/${dayPlan.day_number}`} className="block">
       <div className="card-style flex items-center gap-3 p-3">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
             hasPlaces ? "bg-brand-teal/20 text-brand-teal" : "bg-surface-bg text-text-tertiary"
           }`}
         >
-          {dayPlan.dayNumber}
+          {dayPlan.day_number}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-semibold">Day {dayPlan.dayNumber}</span>
+            <span className="text-sm font-semibold">Day {dayPlan.day_number}</span>
             <span className="text-xs text-text-secondary">
               {formatDate(dayPlan.date, "long").split(",")[0]}
             </span>

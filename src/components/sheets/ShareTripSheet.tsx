@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Copy, Check, Users } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { generateInviteCode, useTripMembers } from "@/db/shared-hooks";
+import { generateInviteCode, useTripMembers } from "@/db/hooks";
 
 interface ShareTripSheetProps {
   open: boolean;

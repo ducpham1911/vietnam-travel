@@ -1,21 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, MapPin, Navigation } from "lucide-react";
-import { TripPlan } from "@/types/trip";
+import { Calendar, MapPin } from "lucide-react";
+import { Trip } from "@/types/trip";
 import { getCityById } from "@/data/cities";
 import { getCityGradient } from "@/lib/theme";
 import { formatDateRange, daysBetween } from "@/lib/utils";
 
 interface TripCardProps {
-  trip: TripPlan;
+  trip: Trip;
   href?: string;
   badge?: React.ReactNode;
 }
 
 export function TripCard({ trip, href, badge }: TripCardProps) {
-  const numDays = daysBetween(trip.startDate, trip.endDate);
-  const cities = trip.cityIds.map(getCityById).filter(Boolean);
+  const numDays = daysBetween(trip.start_date, trip.end_date);
+  const cities = trip.city_ids.map(getCityById).filter(Boolean);
 
   return (
     <Link href={href ?? `/trips/${trip.id}`} className="block">
@@ -27,7 +27,7 @@ export function TripCard({ trip, href, badge }: TripCardProps) {
         <div className="flex items-center gap-2 mb-3">
           <Calendar size={13} className="text-text-secondary" />
           <span className="text-xs text-text-secondary">
-            {formatDateRange(trip.startDate, trip.endDate)}
+            {formatDateRange(trip.start_date, trip.end_date)}
           </span>
           <span className="rounded-full bg-brand-teal/20 px-2 py-0.5 text-[10px] font-medium text-brand-teal">
             {numDays} {numDays === 1 ? "day" : "days"}

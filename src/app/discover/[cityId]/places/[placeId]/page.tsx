@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Plus } from "lucide-react";
 import { getCategoryConfig } from "@/data/categories";
@@ -9,8 +9,7 @@ import { StarRating } from "@/components/discover/StarRating";
 import { PriceLevel } from "@/components/discover/PriceLevel";
 import { AddPlaceToTripSheet } from "@/components/sheets/AddPlaceToTripSheet";
 import { useTrips } from "@/db/hooks";
-import { resolvePlaceRef, resolveCityRef } from "@/lib/resolvers";
-import { useLiveQuery } from "dexie-react-hooks";
+import { resolvePlaceRef, resolveCityRef, ResolvedPlace, ResolvedCity } from "@/lib/resolvers";
 import {
   Landmark,
   Church,
@@ -35,14 +34,16 @@ export default function PlaceDetailPage() {
   const [showAddToTrip, setShowAddToTrip] = useState(false);
   const trips = useTrips();
 
-  const place = useLiveQuery(
-    () => resolvePlaceRef(placeId).then((p) => p ?? null),
-    [placeId]
-  );
-  const city = useLiveQuery(
-    () => resolveCityRef(cityId).then((c) => c ?? null),
-    [cityId]
-  );
+  const [place, setPlace] = useState<ResolvedPlace | null | undefined>(undefined);
+  const [city, setCity] = useState<ResolvedCity | null | undefined>(undefined);
+
+  useEffect(() => {
+    resolvePlaceRef(placeId).then((p) => setPlace(p ?? null));
+  }, [placeId]);
+
+  useEffect(() => {
+    resolveCityRef(cityId).then((c) => setCity(c ?? null));
+  }, [cityId]);
 
   if (place === undefined || city === undefined) {
     return <div className="p-4 text-text-secondary">Loading...</div>;

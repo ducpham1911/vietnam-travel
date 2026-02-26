@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { ThumbnailPicker } from "@/components/ui/ThumbnailPicker";
 import { createCustomCity } from "@/db/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LocationPickerMap = dynamic(
   () =>
@@ -20,6 +21,7 @@ interface AddCustomCitySheetProps {
 }
 
 export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCustomCitySheetProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<"form" | "location">("form");
   const [name, setName] = useState(prefillName);
   const [region, setRegion] = useState("Vietnam");
@@ -33,15 +35,15 @@ export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCusto
   };
 
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !user) return;
     await createCustomCity({
+      user_id: user.id,
       name: name.trim(),
       region: region.trim() || "Vietnam",
-      cityDescription: description.trim(),
+      city_description: description.trim(),
       lat: coords?.lat,
       lng: coords?.lng,
       thumbnail: thumbnail ?? undefined,
-      createdAt: new Date().toISOString(),
     });
     resetAndClose();
   };
@@ -67,7 +69,7 @@ export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCusto
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Cần Thơ"
+              placeholder="e.g. Can Tho"
               className="w-full rounded-xl bg-surface-bg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-brand-gold/50"
             />
           </div>

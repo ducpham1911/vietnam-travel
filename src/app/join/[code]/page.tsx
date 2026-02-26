@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Users, LogIn, Calendar, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { joinTrip, previewTripByInvite, type TripPreview } from "@/db/shared-hooks";
+import { joinTrip, previewTripByInvite, type TripPreview } from "@/db/hooks";
 import { getCityById } from "@/data/cities";
 import { getCityGradient } from "@/lib/theme";
 import { formatDateRange, daysBetween } from "@/lib/utils";
@@ -53,7 +53,7 @@ export default function JoinTripPage() {
     setStatus("joining");
     const tripId = await joinTrip(code);
     if (tripId) {
-      router.replace(`/trips/shared/${tripId}`);
+      router.replace(`/trips/${tripId}`);
     } else {
       setStatus("error");
       setErrorMsg("Failed to join this trip. The invite may have expired.");

@@ -26,6 +26,7 @@ export function FeaturedCityCard({ city, placeCount }: FeaturedCityCardProps) {
             src={`/images/cities/${city.imageAsset}.png`}
             alt={city.name}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />

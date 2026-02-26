@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { Profile } from "@/types/shared";
+import type { Profile } from "@/types/trip";
 
 interface AuthContextValue {
   user: User | null;

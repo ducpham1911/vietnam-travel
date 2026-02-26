@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArrowLeft, MapPin, Plus } from "lucide-react";
@@ -11,7 +11,6 @@ import { PlaceCategory } from "@/types/city";
 import { isCustomCityRef } from "@/lib/customRefs";
 import { resolveCityRef, ResolvedCity } from "@/lib/resolvers";
 import { usePlacesForCityRef } from "@/db/hooks";
-import { useLiveQuery } from "dexie-react-hooks";
 import { AddCustomPlaceSheet } from "@/components/sheets/AddCustomPlaceSheet";
 
 export default function CityDetailPage() {
@@ -20,11 +19,12 @@ export default function CityDetailPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
   const [showAddPlace, setShowAddPlace] = useState(false);
+  const [city, setCity] = useState<ResolvedCity | null | undefined>(undefined);
 
-  const city = useLiveQuery(
-    () => resolveCityRef(cityId).then((c) => c ?? null),
-    [cityId]
-  );
+  useEffect(() => {
+    resolveCityRef(cityId).then((c) => setCity(c ?? null));
+  }, [cityId]);
+
   const allPlaces = usePlacesForCityRef(cityId);
 
   if (city === undefined) return <div className="p-4 text-text-secondary">Loading...</div>;
@@ -53,6 +53,7 @@ export default function CityDetailPage() {
             src={`/images/cities/${city.imageAsset}.png`}
             alt={city.name}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />

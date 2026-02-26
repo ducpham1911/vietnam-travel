@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { cities } from "@/data/cities";
 import { getCityGradient } from "@/lib/theme";
 import { createTrip, useCustomCities } from "@/db/hooks";
 import { resolveStaticCity, resolveCustomCityObj } from "@/lib/resolvers";
-import { Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CreateTripSheetProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface CreateTripSheetProps {
 }
 
 export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState(
@@ -21,6 +23,7 @@ export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
   );
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const [creating, setCreating] = useState(false);
   const customCities = useCustomCities();
 
   const allCities = [
@@ -35,18 +38,20 @@ export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
   };
 
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !user) return;
+    setCreating(true);
     await createTrip({
       name: name.trim(),
-      startDate,
-      endDate,
+      start_date: startDate,
+      end_date: endDate,
       notes,
-      cityIds: selectedCities,
-      createdAt: new Date().toISOString(),
+      city_ids: selectedCities,
+      owner_id: user.id,
     });
     setName("");
     setSelectedCities([]);
     setNotes("");
+    setCreating(false);
     onClose();
   };
 
@@ -139,10 +144,10 @@ export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
 
         <button
           onClick={handleCreate}
-          disabled={!name.trim()}
+          disabled={!name.trim() || creating}
           className="w-full rounded-xl bg-brand-teal py-3 text-sm font-semibold disabled:opacity-40"
         >
-          Create Trip
+          {creating ? "Creating..." : "Create Trip"}
         </button>
       </div>
     </Modal>

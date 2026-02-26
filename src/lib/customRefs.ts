@@ -5,22 +5,22 @@ export function isCustomCityRef(id: string): boolean {
   return id.startsWith(CC_PREFIX);
 }
 
-export function parseCustomCityRef(id: string): number {
-  return Number(id.slice(CC_PREFIX.length));
+export function parseCustomCityRef(id: string): string {
+  return id.slice(CC_PREFIX.length);
 }
 
-export function toCustomCityRef(numId: number): string {
-  return `${CC_PREFIX}${numId}`;
+export function toCustomCityRef(uuid: string): string {
+  return `${CC_PREFIX}${uuid}`;
 }
 
 export function isCustomPlaceRef(id: string): boolean {
   return id.startsWith(CP_PREFIX);
 }
 
-export function parseCustomPlaceRef(id: string): number {
-  return Number(id.slice(CP_PREFIX.length));
+export function parseCustomPlaceRef(id: string): string {
+  return id.slice(CP_PREFIX.length);
 }
 
-export function toCustomPlaceRef(numId: number): string {
-  return `${CP_PREFIX}${numId}`;
+export function toCustomPlaceRef(uuid: string): string {
+  return `${CP_PREFIX}${uuid}`;
 }

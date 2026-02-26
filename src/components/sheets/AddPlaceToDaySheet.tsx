@@ -7,13 +7,14 @@ import { CategoryChip } from "@/components/discover/CategoryChip";
 import { getCategoryConfig } from "@/data/categories";
 import { getCategoryColor } from "@/lib/theme";
 import { addPlaceVisit, usePlacesForCityRef } from "@/db/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 import { ResolvedPlace } from "@/lib/resolvers";
 import { PlaceCategory } from "@/types/city";
 
 interface AddPlaceToDaySheetProps {
   open: boolean;
   onClose: () => void;
-  dayPlanId: number;
+  dayPlanId: string;
   cityIds: string[];
   nextOrderIndex: number;
 }
@@ -25,6 +26,7 @@ export function AddPlaceToDaySheet({
   cityIds,
   nextOrderIndex,
 }: AddPlaceToDaySheetProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<"select" | "configure">("select");
   const [selectedPlace, setSelectedPlace] = useState<ResolvedPlace | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
@@ -66,15 +68,13 @@ export function AddPlaceToDaySheet({
     if (!selectedPlace) return;
     const today = new Date().toISOString().split("T")[0];
     await addPlaceVisit({
-      dayPlanId,
-      placeId: selectedPlace.id,
-      timeSlot: "",
-      notes: "",
-      isVisited: false,
-      orderIndex: nextOrderIndex,
-      startTime: useTime ? `${today}T${startTime}:00` : null,
-      endTime: useTime ? `${today}T${endTime}:00` : null,
-      selectedDishes,
+      day_plan_id: dayPlanId,
+      place_id: selectedPlace.id,
+      order_index: nextOrderIndex,
+      start_time: useTime ? `${today}T${startTime}:00` : null,
+      end_time: useTime ? `${today}T${endTime}:00` : null,
+      selected_dishes: selectedDishes,
+      added_by: user?.id ?? null,
     });
     resetAndClose();
   };

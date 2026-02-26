@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, ExternalLink, Trash2 } from "lucide-react";
 import { cities } from "@/data/cities";
 import { getPlacesByCity } from "@/data/places";
@@ -10,26 +10,37 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import { AddCustomCitySheet } from "@/components/sheets/AddCustomCitySheet";
 import { useCustomCities, deleteCustomCity } from "@/db/hooks";
 import { resolveStaticCity, resolveCustomCityObj, ResolvedCity } from "@/lib/resolvers";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/db/db";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function DiscoverPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [showAddCity, setShowAddCity] = useState(false);
   const [deletingCity, setDeletingCity] = useState<ResolvedCity | null>(null);
   const customCities = useCustomCities();
+  const [customPlaceCounts, setCustomPlaceCounts] = useState<Record<string, number>>({});
 
-  // Custom city place counts
-  const customPlaceCounts = useLiveQuery(async () => {
-    const counts: Record<number, number> = {};
-    for (const cc of customCities) {
-      if (!cc.id) continue;
-      const places = await db.customPlaces.where("customCityId").equals(cc.id).count();
-      counts[cc.id] = places;
+  // Fetch custom place counts — stabilize dep with serialized IDs
+  const customCityIds = customCities.map((c) => c.id).join(",");
+  useEffect(() => {
+    if (!user || !customCityIds) return;
+    async function fetchCounts() {
+      const ids = customCityIds.split(",");
+      const counts: Record<string, number> = {};
+      const supabase = getSupabaseBrowserClient();
+      for (const id of ids) {
+        const { count } = await supabase
+          .from("custom_places")
+          .select("*", { count: "exact", head: true })
+          .eq("custom_city_id", id);
+        counts[id] = count ?? 0;
+      }
+      setCustomPlaceCounts(counts);
     }
-    return counts;
-  }, [customCities]) ?? {};
+    fetchCounts();
+  }, [customCityIds, user]);
 
   // Build unified list
   const allCities: ResolvedCity[] = [

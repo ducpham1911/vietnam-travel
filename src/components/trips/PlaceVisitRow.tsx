@@ -4,10 +4,8 @@ import { ChevronUp, ChevronDown, Trash2, Circle, CheckCircle } from "lucide-reac
 import { PlaceVisit } from "@/types/trip";
 import { getCategoryConfig } from "@/data/categories";
 import { getCategoryColor } from "@/lib/theme";
-import { updatePlaceVisit, deletePlaceVisit } from "@/db/hooks";
+import { updatePlaceVisit, deletePlaceVisit, useResolvePlaceRef } from "@/db/hooks";
 import { formatTimeRange } from "@/lib/utils";
-import { resolvePlaceRef } from "@/lib/resolvers";
-import { useLiveQuery } from "dexie-react-hooks";
 
 interface PlaceVisitRowProps {
   visit: PlaceVisit;
@@ -15,18 +13,18 @@ interface PlaceVisitRowProps {
   isLast: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  onToggleVisited?: (id: number | string, isVisited: boolean) => void;
-  onDelete?: (id: number | string) => void;
+  onToggleVisited?: (id: string, isVisited: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, onToggleVisited, onDelete }: PlaceVisitRowProps) {
-  const place = useLiveQuery(() => resolvePlaceRef(visit.placeId), [visit.placeId]);
+  const place = useResolvePlaceRef(visit.place_id);
 
   if (!place) return null;
 
   const config = getCategoryConfig(place.category);
   const color = getCategoryColor(place.category);
-  const timeRange = formatTimeRange(visit.startTime, visit.endTime);
+  const timeRange = formatTimeRange(visit.start_time, visit.end_time);
 
   return (
     <div className="flex gap-3">
@@ -34,7 +32,7 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, on
       <div className="flex flex-col items-center">
         <div
           className={`h-3 w-3 rounded-full border-2 ${
-            visit.isVisited
+            visit.is_visited
               ? "border-brand-teal bg-brand-teal"
               : "border-surface-bg bg-dark-bg"
           }`}
@@ -49,7 +47,7 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, on
             <div className="min-w-0 flex-1">
               <h3
                 className={`text-sm font-semibold ${
-                  visit.isVisited ? "line-through text-text-secondary" : ""
+                  visit.is_visited ? "line-through text-text-secondary" : ""
                 }`}
               >
                 {place.name}
@@ -67,12 +65,12 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, on
               <button
                 onClick={() =>
                   onToggleVisited
-                    ? onToggleVisited(visit.id!, !visit.isVisited)
-                    : updatePlaceVisit(visit.id!, { isVisited: !visit.isVisited })
+                    ? onToggleVisited(visit.id, !visit.is_visited)
+                    : updatePlaceVisit(visit.id, { is_visited: !visit.is_visited })
                 }
                 className="p-1"
               >
-                {visit.isVisited ? (
+                {visit.is_visited ? (
                   <CheckCircle size={18} className="text-brand-teal" />
                 ) : (
                   <Circle size={18} className="text-text-tertiary" />
@@ -86,7 +84,7 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, on
               </button>
               <button
                 onClick={() =>
-                  onDelete ? onDelete(visit.id!) : deletePlaceVisit(visit.id!)
+                  onDelete ? onDelete(visit.id) : deletePlaceVisit(visit.id)
                 }
                 className="p-1"
               >
@@ -101,9 +99,9 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, on
             </span>
           )}
 
-          {visit.selectedDishes.length > 0 && (
+          {visit.selected_dishes.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
-              {visit.selectedDishes.map((dish) => (
+              {visit.selected_dishes.map((dish) => (
                 <span
                   key={dish}
                   className="rounded-full px-2 py-0.5 text-[10px] font-medium"

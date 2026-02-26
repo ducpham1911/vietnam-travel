@@ -104,8 +104,9 @@ export function VietnamMap() {
           customCities
             .filter((cc) => cc.lat && cc.lng)
             .map((cc) => {
-              const ref = toCustomCityRef(cc.id!);
-              const [color] = getCityGradient(cc.id! % 10);
+              const ref = toCustomCityRef(cc.id);
+              const hashCode = cc.id.split("").reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+              const [color] = getCityGradient(Math.abs(hashCode) % 10);
               return (
                 <Marker
                   key={ref}
@@ -144,8 +145,8 @@ export function VietnamMap() {
           customPlaces
             .filter((cp) => cp.lat && cp.lng)
             .map((cp) => {
-              const color = getCategoryColor(cp.categoryRawValue as PlaceCategory);
-              const config = getCategoryConfig(cp.categoryRawValue as PlaceCategory);
+              const color = getCategoryColor(cp.category_raw_value as PlaceCategory);
+              const config = getCategoryConfig(cp.category_raw_value as PlaceCategory);
               const resolved = resolveCustomPlaceObj(cp);
               return (
                 <Marker
