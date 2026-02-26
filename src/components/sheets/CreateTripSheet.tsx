@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { cities } from "@/data/cities";
 import { getCityGradient } from "@/lib/theme";
-import { createTrip } from "@/db/hooks";
+import { createTrip, useCustomCities } from "@/db/hooks";
+import { resolveStaticCity, resolveCustomCityObj } from "@/lib/resolvers";
 import { Check } from "lucide-react";
 
 interface CreateTripSheetProps {
@@ -20,6 +21,12 @@ export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
   );
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const customCities = useCustomCities();
+
+  const allCities = [
+    ...cities.map(resolveStaticCity),
+    ...customCities.map(resolveCustomCityObj),
+  ];
 
   const toggleCity = (id: string) => {
     setSelectedCities((prev) =>
@@ -85,7 +92,7 @@ export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
             Cities
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {cities.map((city) => {
+            {allCities.map((city) => {
               const isSelected = selectedCities.includes(city.id);
               const [grad] = getCityGradient(city.gradientIndex);
               return (
@@ -108,6 +115,9 @@ export function CreateTripSheet({ open, onClose }: CreateTripSheetProps) {
                   <span className={isSelected ? "font-medium" : "text-text-secondary"}>
                     {city.name}
                   </span>
+                  {city.isCustom && (
+                    <span className="ml-auto text-[9px] text-text-tertiary">custom</span>
+                  )}
                 </button>
               );
             })}

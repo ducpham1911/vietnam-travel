@@ -2,6 +2,15 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "./db";
 import type { TripPlan, DayPlan, PlaceVisit, CustomCity, CustomPlace } from "@/types/trip";
 import { addDays, daysBetween } from "@/lib/utils";
+import { getPlacesByCity } from "@/data/places";
+import { isCustomCityRef, parseCustomCityRef } from "@/lib/customRefs";
+import {
+  resolveCityRef,
+  resolveStaticPlace,
+  resolveCustomPlaceObj,
+  type ResolvedCity,
+  type ResolvedPlace,
+} from "@/lib/resolvers";
 
 // ===== Trips =====
 
@@ -136,4 +145,44 @@ export function useCustomPlaces(cityId?: string, customCityId?: number) {
 
 export async function createCustomPlace(place: Omit<CustomPlace, "id">) {
   return db.customPlaces.add(place as CustomPlace);
+}
+
+// ===== Resolved Helpers =====
+
+export function useResolvedCities(refs: string[]): ResolvedCity[] {
+  return (
+    useLiveQuery(async () => {
+      const results: ResolvedCity[] = [];
+      for (const ref of refs) {
+        const resolved = await resolveCityRef(ref);
+        if (resolved) results.push(resolved);
+      }
+      return results;
+    }, [refs.join(",")]) ?? []
+  );
+}
+
+export function usePlacesForCityRef(ref: string): ResolvedPlace[] {
+  return (
+    useLiveQuery(async () => {
+      if (isCustomCityRef(ref)) {
+        const numId = parseCustomCityRef(ref);
+        const customPlaces = await db.customPlaces
+          .where("customCityId")
+          .equals(numId)
+          .toArray();
+        return customPlaces.map(resolveCustomPlaceObj);
+      }
+      // Static city: return static places + any custom places added to this city
+      const staticPlaces = getPlacesByCity(ref).map(resolveStaticPlace);
+      const customPlaces = await db.customPlaces
+        .where("cityId")
+        .equals(ref)
+        .toArray();
+      const resolvedCustom = customPlaces
+        .filter((cp) => !cp.isCustomCity)
+        .map(resolveCustomPlaceObj);
+      return [...staticPlaces, ...resolvedCustom];
+    }, [ref]) ?? []
+  );
 }

@@ -1,40 +1,69 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, MapPin, Trash2, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink, Trash2 } from "lucide-react";
 import { cities } from "@/data/cities";
+import { getPlacesByCity } from "@/data/places";
 import { FeaturedCityCard } from "@/components/discover/FeaturedCityCard";
 import { CityCard } from "@/components/discover/CityCard";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { AddCustomCitySheet } from "@/components/sheets/AddCustomCitySheet";
 import { useCustomCities, deleteCustomCity } from "@/db/hooks";
+import { resolveStaticCity, resolveCustomCityObj, ResolvedCity } from "@/lib/resolvers";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/db/db";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function DiscoverPage() {
   const [search, setSearch] = useState("");
   const [showAddCity, setShowAddCity] = useState(false);
+  const [deletingCity, setDeletingCity] = useState<ResolvedCity | null>(null);
   const customCities = useCustomCities();
 
-  const featured = cities[0]; // Hà Nội
-  const remaining = cities.slice(1);
+  // Custom city place counts
+  const customPlaceCounts = useLiveQuery(async () => {
+    const counts: Record<number, number> = {};
+    for (const cc of customCities) {
+      if (!cc.id) continue;
+      const places = await db.customPlaces.where("customCityId").equals(cc.id).count();
+      counts[cc.id] = places;
+    }
+    return counts;
+  }, [customCities]) ?? {};
+
+  // Build unified list
+  const allCities: ResolvedCity[] = [
+    ...cities.map(resolveStaticCity),
+    ...customCities.map(resolveCustomCityObj),
+  ];
+
+  const featured = allCities[0]; // Ha Noi
+  const remaining = allCities.slice(1);
 
   const searchLower = search.toLowerCase();
-  const filteredSeed = search
-    ? cities.filter(
+  const filtered = search
+    ? allCities.filter(
         (c) =>
           c.name.toLowerCase().includes(searchLower) ||
           c.region.toLowerCase().includes(searchLower)
       )
     : null;
 
-  const filteredCustom = search
-    ? customCities.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchLower) ||
-          c.region.toLowerCase().includes(searchLower)
-      )
-    : customCities;
+  const noResults = filtered && filtered.length === 0;
 
-  const noResults = filteredSeed && filteredSeed.length === 0 && filteredCustom.length === 0;
+  const getPlaceCount = (city: ResolvedCity): number => {
+    if (city.isCustom && city.customId) {
+      return customPlaceCounts[city.customId] ?? 0;
+    }
+    return getPlacesByCity(city.id).length;
+  };
+
+  const handleDeleteCustomCity = async () => {
+    if (deletingCity?.customId) {
+      await deleteCustomCity(deletingCity.customId);
+    }
+    setDeletingCity(null);
+  };
 
   return (
     <div className="px-4 pt-4">
@@ -51,7 +80,7 @@ export default function DiscoverPage() {
         />
       </div>
 
-      {filteredSeed ? (
+      {filtered ? (
         <div>
           {noResults ? (
             <div className="py-12 text-center">
@@ -73,47 +102,53 @@ export default function DiscoverPage() {
               </a>
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                {filteredSeed.map((city) => (
-                  <CityCard key={city.id} city={city} />
-                ))}
-              </div>
-              {filteredCustom.length > 0 && (
-                <div className="mt-4">
-                  <h2 className="mb-2 text-sm font-semibold text-text-secondary">Your Cities</h2>
-                  {filteredCustom.map((cc) => (
-                    <CustomCityRow key={cc.id} city={cc} onDelete={() => deleteCustomCity(cc.id!)} />
-                  ))}
+            <div className="grid grid-cols-2 gap-3">
+              {filtered.map((city) => (
+                <div key={city.id} className="relative">
+                  <CityCard city={city} placeCount={getPlaceCount(city)} />
+                  {city.isCustom && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDeletingCity(city);
+                      }}
+                      className="absolute top-1.5 left-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+                    >
+                      <Trash2 size={11} className="text-red-400" />
+                    </button>
+                  )}
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
       ) : (
         <>
           <div className="mb-4">
-            <FeaturedCityCard city={featured} />
+            <FeaturedCityCard city={featured} placeCount={getPlaceCount(featured)} />
           </div>
 
           <h2 className="mb-3 text-lg font-semibold">All Cities</h2>
           <div className="grid grid-cols-2 gap-3">
             {remaining.map((city) => (
-              <CityCard key={city.id} city={city} />
+              <div key={city.id} className="relative">
+                <CityCard city={city} placeCount={getPlaceCount(city)} />
+                {city.isCustom && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDeletingCity(city);
+                    }}
+                    className="absolute top-1.5 left-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+                  >
+                    <Trash2 size={11} className="text-red-400" />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
-
-          {/* Custom Cities Section */}
-          {customCities.length > 0 && (
-            <div className="mt-6">
-              <h2 className="mb-3 text-lg font-semibold">Your Cities</h2>
-              <div className="flex flex-col gap-2">
-                {customCities.map((cc) => (
-                  <CustomCityRow key={cc.id} city={cc} onDelete={() => deleteCustomCity(cc.id!)} />
-                ))}
-              </div>
-            </div>
-          )}
 
           <button
             onClick={() => setShowAddCity(true)}
@@ -130,29 +165,16 @@ export default function DiscoverPage() {
         onClose={() => setShowAddCity(false)}
         prefillName={noResults ? search : ""}
       />
-    </div>
-  );
-}
 
-function CustomCityRow({
-  city,
-  onDelete,
-}: {
-  city: { id?: number; name: string; region: string; cityDescription: string };
-  onDelete: () => void;
-}) {
-  return (
-    <div className="card-style flex items-center gap-3 p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-coral/20">
-        <MapPin size={16} className="text-brand-coral" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <h3 className="text-sm font-semibold">{city.name}</h3>
-        <p className="text-xs text-text-secondary">{city.region}</p>
-      </div>
-      <button onClick={onDelete} className="p-1">
-        <Trash2 size={14} className="text-text-tertiary" />
-      </button>
+      <ConfirmDialog
+        open={!!deletingCity}
+        onClose={() => setDeletingCity(null)}
+        onConfirm={handleDeleteCustomCity}
+        title="Delete City"
+        message={`Are you sure you want to delete "${deletingCity?.name}"? This will also remove all custom places in this city.`}
+        confirmLabel="Delete"
+        destructive
+      />
     </div>
   );
 }

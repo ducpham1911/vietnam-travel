@@ -2,11 +2,12 @@
 
 import { ChevronUp, ChevronDown, Trash2, Circle, CheckCircle } from "lucide-react";
 import { PlaceVisit } from "@/types/trip";
-import { getPlaceById } from "@/data/places";
 import { getCategoryConfig } from "@/data/categories";
 import { getCategoryColor } from "@/lib/theme";
 import { updatePlaceVisit, deletePlaceVisit } from "@/db/hooks";
 import { formatTimeRange } from "@/lib/utils";
+import { resolvePlaceRef } from "@/lib/resolvers";
+import { useLiveQuery } from "dexie-react-hooks";
 
 interface PlaceVisitRowProps {
   visit: PlaceVisit;
@@ -17,7 +18,8 @@ interface PlaceVisitRowProps {
 }
 
 export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown }: PlaceVisitRowProps) {
-  const place = getPlaceById(visit.placeId);
+  const place = useLiveQuery(() => resolvePlaceRef(visit.placeId), [visit.placeId]);
+
   if (!place) return null;
 
   const config = getCategoryConfig(place.category);

@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Plus } from "lucide-react";
-import { getPlaceById } from "@/data/places";
-import { getCityById } from "@/data/cities";
 import { getCategoryConfig } from "@/data/categories";
 import { getCategoryColor } from "@/lib/theme";
 import { StarRating } from "@/components/discover/StarRating";
 import { PriceLevel } from "@/components/discover/PriceLevel";
 import { AddPlaceToTripSheet } from "@/components/sheets/AddPlaceToTripSheet";
 import { useTrips } from "@/db/hooks";
+import { resolvePlaceRef, resolveCityRef } from "@/lib/resolvers";
+import { useLiveQuery } from "dexie-react-hooks";
 import {
   Landmark,
   Church,
@@ -28,13 +28,25 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 };
 
 export default function PlaceDetailPage() {
-  const { placeId, cityId } = useParams<{ placeId: string; cityId: string }>();
+  const params = useParams<{ placeId: string; cityId: string }>();
+  const placeId = decodeURIComponent(params.placeId);
+  const cityId = decodeURIComponent(params.cityId);
   const router = useRouter();
   const [showAddToTrip, setShowAddToTrip] = useState(false);
   const trips = useTrips();
 
-  const place = getPlaceById(placeId);
-  const city = getCityById(cityId);
+  const place = useLiveQuery(
+    () => resolvePlaceRef(placeId).then((p) => p ?? null),
+    [placeId]
+  );
+  const city = useLiveQuery(
+    () => resolveCityRef(cityId).then((c) => c ?? null),
+    [cityId]
+  );
+
+  if (place === undefined || city === undefined) {
+    return <div className="p-4 text-text-secondary">Loading...</div>;
+  }
   if (!place || !city) return <div className="p-4">Place not found</div>;
 
   const config = getCategoryConfig(place.category);
@@ -73,17 +85,21 @@ export default function PlaceDetailPage() {
       </div>
 
       <div className="px-4 -mt-4 space-y-3 pb-4">
-        {/* Rating & Price */}
-        <div className="card-style p-4 flex items-center justify-between">
-          <StarRating rating={place.rating} size={16} />
-          <PriceLevel level={place.priceLevel} />
-        </div>
+        {/* Rating & Price — only for static places */}
+        {place.rating !== null && place.priceLevel !== null && (
+          <div className="card-style p-4 flex items-center justify-between">
+            <StarRating rating={place.rating} size={16} />
+            <PriceLevel level={place.priceLevel} />
+          </div>
+        )}
 
         {/* About */}
-        <div className="card-style p-4">
-          <h2 className="text-sm font-semibold mb-2 text-text-secondary">About</h2>
-          <p className="text-sm leading-relaxed">{place.description}</p>
-        </div>
+        {place.description && (
+          <div className="card-style p-4">
+            <h2 className="text-sm font-semibold mb-2 text-text-secondary">About</h2>
+            <p className="text-sm leading-relaxed">{place.description}</p>
+          </div>
+        )}
 
         {/* Recommended Dishes */}
         {place.recommendedDishes.length > 0 && (
@@ -106,13 +122,15 @@ export default function PlaceDetailPage() {
         )}
 
         {/* Address */}
-        <div className="card-style p-4 flex items-start gap-3">
-          <MapPin size={16} className="mt-0.5 shrink-0 text-text-secondary" />
-          <div>
-            <h2 className="text-sm font-semibold mb-0.5 text-text-secondary">Address</h2>
-            <p className="text-sm">{place.address}</p>
+        {place.address && (
+          <div className="card-style p-4 flex items-start gap-3">
+            <MapPin size={16} className="mt-0.5 shrink-0 text-text-secondary" />
+            <div>
+              <h2 className="text-sm font-semibold mb-0.5 text-text-secondary">Address</h2>
+              <p className="text-sm">{place.address}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Add to Trip button */}
         {trips.length > 0 && (

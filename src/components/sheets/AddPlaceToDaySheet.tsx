@@ -4,11 +4,11 @@ import { useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CategoryChip } from "@/components/discover/CategoryChip";
-import { getPlacesByCity } from "@/data/places";
 import { getCategoryConfig } from "@/data/categories";
 import { getCategoryColor } from "@/lib/theme";
-import { addPlaceVisit } from "@/db/hooks";
-import { Place, PlaceCategory } from "@/types/city";
+import { addPlaceVisit, usePlacesForCityRef } from "@/db/hooks";
+import { ResolvedPlace } from "@/lib/resolvers";
+import { PlaceCategory } from "@/types/city";
 
 interface AddPlaceToDaySheetProps {
   open: boolean;
@@ -26,20 +26,37 @@ export function AddPlaceToDaySheet({
   nextOrderIndex,
 }: AddPlaceToDaySheetProps) {
   const [step, setStep] = useState<"select" | "configure">("select");
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<ResolvedPlace | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
   const [useTime, setUseTime] = useState(false);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [selectedDishes, setSelectedDishes] = useState<string[]>([]);
 
-  const allPlaces = cityIds.flatMap(getPlacesByCity);
+  // Gather places from all city refs (static + custom)
+  const city0Places = usePlacesForCityRef(cityIds[0] ?? "");
+  const city1Places = usePlacesForCityRef(cityIds[1] ?? "");
+  const city2Places = usePlacesForCityRef(cityIds[2] ?? "");
+  const city3Places = usePlacesForCityRef(cityIds[3] ?? "");
+  const city4Places = usePlacesForCityRef(cityIds[4] ?? "");
+
+  const allPlaces: ResolvedPlace[] = [];
+  const seen = new Set<string>();
+  for (const list of [city0Places, city1Places, city2Places, city3Places, city4Places]) {
+    for (const p of list) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        allPlaces.push(p);
+      }
+    }
+  }
+
   const categories = Array.from(new Set(allPlaces.map((p) => p.category))).sort();
   const filteredPlaces = selectedCategory
     ? allPlaces.filter((p) => p.category === selectedCategory)
     : allPlaces;
 
-  const handleSelectPlace = (place: Place) => {
+  const handleSelectPlace = (place: ResolvedPlace) => {
     setSelectedPlace(place);
     setSelectedDishes([]);
     setStep("configure");
@@ -122,7 +139,10 @@ export function AddPlaceToDaySheet({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{place.name}</p>
-                    <p className="text-[10px] text-text-secondary">{config.label}</p>
+                    <p className="text-[10px] text-text-secondary">
+                      {config.label}
+                      {place.isCustom && " (custom)"}
+                    </p>
                   </div>
                 </button>
               );

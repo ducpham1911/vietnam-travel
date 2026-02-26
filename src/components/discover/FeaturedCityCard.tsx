@@ -1,28 +1,38 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
-import { City } from "@/types/city";
+import { ResolvedCity } from "@/lib/resolvers";
 import { getCityGradient } from "@/lib/theme";
-import { getPlacesByCity } from "@/data/places";
 
 interface FeaturedCityCardProps {
-  city: City;
+  city: ResolvedCity;
+  placeCount: number;
 }
 
-export function FeaturedCityCard({ city }: FeaturedCityCardProps) {
-  const [gradFrom, gradTo] = getCityGradient(city.gradientIndex);
-  const placeCount = getPlacesByCity(city.id).length;
+export function FeaturedCityCard({ city, placeCount }: FeaturedCityCardProps) {
+  const [gradFrom] = getCityGradient(city.gradientIndex);
 
   return (
     <Link href={`/discover/${city.id}`} className="block">
       <div className="relative h-52 overflow-hidden rounded-2xl">
-        <Image
-          src={`/images/cities/${city.imageAsset}.png`}
-          alt={city.name}
-          fill
-          className="object-cover"
-          priority
-        />
+        {city.imageAsset ? (
+          <Image
+            src={`/images/cities/${city.imageAsset}.png`}
+            alt={city.name}
+            fill
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              background: `linear-gradient(135deg, ${gradFrom}, ${gradFrom}80)`,
+            }}
+          >
+            <MapPin size={48} className="text-white/30" />
+          </div>
+        )}
         <div
           className="absolute inset-0"
           style={{

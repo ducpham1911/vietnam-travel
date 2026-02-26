@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Place } from "@/types/city";
+import { ResolvedPlace } from "@/lib/resolvers";
 import { getCategoryConfig } from "@/data/categories";
 import { StarRating } from "./StarRating";
 import { PriceLevel } from "./PriceLevel";
@@ -29,7 +29,7 @@ const iconMap: Record<string, typeof Landmark> = {
 };
 
 interface PlaceCardProps {
-  place: Place;
+  place: ResolvedPlace;
   cityId: string;
 }
 
@@ -58,8 +58,8 @@ export function PlaceCard({ place, cityId }: PlaceCardProps) {
           </div>
           <p className="mt-0.5 text-xs text-text-secondary line-clamp-2">{place.description}</p>
           <div className="mt-2 flex items-center gap-3">
-            <StarRating rating={place.rating} size={11} />
-            <PriceLevel level={place.priceLevel} />
+            {place.rating !== null && <StarRating rating={place.rating} size={11} />}
+            {place.priceLevel !== null && <PriceLevel level={place.priceLevel} />}
             {place.recommendedDishes.length > 0 && (
               <span className="flex items-center gap-1 text-[10px] text-text-tertiary">
                 <Dish size={10} />

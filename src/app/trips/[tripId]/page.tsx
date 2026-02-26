@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Calendar, Trash2, MapPin } from "lucide-react";
-import { useTrip, useDayPlans, deleteTrip } from "@/db/hooks";
+import { useTrip, useDayPlans, deleteTrip, useResolvedCities } from "@/db/hooks";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/db/db";
-import { getCityById } from "@/data/cities";
 import { getCityGradient } from "@/lib/theme";
 import { formatDateRange, daysBetween } from "@/lib/utils";
 import { DayCard } from "@/components/trips/DayCard";
@@ -20,6 +19,8 @@ export default function TripDetailPage() {
   const trip = useTrip(id);
   const dayPlans = useDayPlans(id);
   const [showDelete, setShowDelete] = useState(false);
+
+  const cities = useResolvedCities(trip?.cityIds ?? []);
 
   // Get place visit counts for each day plan
   const visitCounts = useLiveQuery(async () => {
@@ -38,7 +39,6 @@ export default function TripDetailPage() {
   if (!trip) return <div className="p-4 text-text-secondary">Loading...</div>;
 
   const numDays = daysBetween(trip.startDate, trip.endDate);
-  const cities = trip.cityIds.map(getCityById).filter(Boolean);
 
   const handleDelete = async () => {
     await deleteTrip(id);
@@ -80,7 +80,6 @@ export default function TripDetailPage() {
         {cities.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {cities.map((city) => {
-              if (!city) return null;
               const [grad] = getCityGradient(city.gradientIndex);
               return (
                 <span
