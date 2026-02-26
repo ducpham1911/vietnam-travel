@@ -59,3 +59,28 @@ body {
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
 }
+
+/* MapLibre popup overrides */
+.map-popup .maplibregl-popup-content {
+  background: #161B22;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 10px 12px;
+}
+
+.map-popup .maplibregl-popup-tip {
+  border-top-color: #161B22;
+}
+
+.map-popup .maplibregl-popup-close-button {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 18px;
+  padding: 2px 6px;
+}
+
+.map-popup .maplibregl-popup-close-button:hover {
+  color: #fff;
+  background: transparent;
+}

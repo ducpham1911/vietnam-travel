@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Briefcase } from "lucide-react";
+import { Compass, Map, Briefcase } from "lucide-react";
 
 const tabs = [
   { href: "/discover", label: "Discover", icon: Compass },
+  { href: "/map", label: "Map", icon: Map },
   { href: "/trips", label: "My Trips", icon: Briefcase },
 ];
 
