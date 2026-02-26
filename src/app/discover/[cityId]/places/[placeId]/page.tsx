@@ -59,9 +59,24 @@ export default function PlaceDetailPage() {
       <div
         className="relative h-56"
         style={{
-          background: `linear-gradient(135deg, ${color}, ${color}80)`,
+          background: place.thumbnail ? undefined : `linear-gradient(135deg, ${color}, ${color}80)`,
         }}
       >
+        {place.thumbnail && (
+          <>
+            <img
+              src={place.thumbnail}
+              alt={place.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(to top, ${color}E6 0%, ${color}80 50%, transparent 100%)`,
+              }}
+            />
+          </>
+        )}
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 backdrop-blur-md"
@@ -69,7 +84,7 @@ export default function PlaceDetailPage() {
           <ArrowLeft size={18} />
         </button>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {Icon && <Icon size={48} className="mb-3 text-white/30" />}
+          {!place.thumbnail && Icon && <Icon size={48} className="mb-3 text-white/30" />}
           <span
             className="mb-2 rounded-full px-3 py-1 text-xs font-medium"
             style={{ backgroundColor: "rgba(255,255,255,0.15)" }}

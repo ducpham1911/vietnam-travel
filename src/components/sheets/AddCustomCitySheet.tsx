@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { ThumbnailPicker } from "@/components/ui/ThumbnailPicker";
 import { createCustomCity } from "@/db/hooks";
 
 const LocationPickerMap = dynamic(
@@ -24,6 +25,7 @@ export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCusto
   const [region, setRegion] = useState("Vietnam");
   const [description, setDescription] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
 
   const handleNext = () => {
     if (!name.trim()) return;
@@ -38,6 +40,7 @@ export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCusto
       cityDescription: description.trim(),
       lat: coords?.lat,
       lng: coords?.lng,
+      thumbnail: thumbnail ?? undefined,
       createdAt: new Date().toISOString(),
     });
     resetAndClose();
@@ -49,6 +52,7 @@ export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCusto
     setRegion("Vietnam");
     setDescription("");
     setCoords(null);
+    setThumbnail(null);
     onClose();
   };
 
@@ -56,6 +60,7 @@ export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCusto
     <Modal open={open} onClose={resetAndClose} title={step === "form" ? "Add Custom City" : "Mark Location"}>
       {step === "form" ? (
         <div className="space-y-4">
+          <ThumbnailPicker value={thumbnail} onChange={setThumbnail} />
           <div>
             <label className="text-xs font-medium text-text-secondary mb-1 block">City Name</label>
             <input

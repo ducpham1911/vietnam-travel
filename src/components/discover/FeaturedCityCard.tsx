@@ -15,7 +15,13 @@ export function FeaturedCityCard({ city, placeCount }: FeaturedCityCardProps) {
   return (
     <Link href={`/discover/${city.id}`} className="block">
       <div className="relative h-52 overflow-hidden rounded-2xl">
-        {city.imageAsset ? (
+        {city.thumbnail ? (
+          <img
+            src={city.thumbnail}
+            alt={city.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : city.imageAsset ? (
           <Image
             src={`/images/cities/${city.imageAsset}.png`}
             alt={city.name}

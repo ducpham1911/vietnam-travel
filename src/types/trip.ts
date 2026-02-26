@@ -36,6 +36,7 @@ export interface CustomCity {
   cityDescription: string;
   lat?: number;
   lng?: number;
+  thumbnail?: string;
   createdAt: string;
 }
 
@@ -50,6 +51,7 @@ export interface CustomPlace {
   isCustomCity: boolean;
   lat?: number;
   lng?: number;
+  thumbnail?: string;
   recommendedDishes: string[];
   createdAt: string;
 }

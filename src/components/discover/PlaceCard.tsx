@@ -40,12 +40,20 @@ export function PlaceCard({ place, cityId }: PlaceCardProps) {
   return (
     <Link href={`/discover/${cityId}/places/${place.id}`} className="block">
       <div className="card-style flex gap-3 p-3">
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: config.color + "20" }}
-        >
-          {Icon && <Icon size={20} color={config.color} />}
-        </div>
+        {place.thumbnail ? (
+          <img
+            src={place.thumbnail}
+            alt={place.name}
+            className="h-11 w-11 shrink-0 rounded-xl object-cover"
+          />
+        ) : (
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+            style={{ backgroundColor: config.color + "20" }}
+          >
+            {Icon && <Icon size={20} color={config.color} />}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-sm font-semibold leading-tight">{place.name}</h3>

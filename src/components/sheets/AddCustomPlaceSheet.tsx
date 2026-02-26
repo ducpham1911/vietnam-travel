@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { ThumbnailPicker } from "@/components/ui/ThumbnailPicker";
 import { createCustomPlace } from "@/db/hooks";
 import { isCustomCityRef, parseCustomCityRef } from "@/lib/customRefs";
 import { categories } from "@/data/categories";
@@ -28,6 +29,7 @@ export function AddCustomPlaceSheet({ open, onClose, cityRef, cityCoords }: AddC
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
 
   const isCustomCity = isCustomCityRef(cityRef);
   const customCityId = isCustomCity ? parseCustomCityRef(cityRef) : undefined;
@@ -49,6 +51,7 @@ export function AddCustomPlaceSheet({ open, onClose, cityRef, cityCoords }: AddC
       isCustomCity,
       lat: coords?.lat,
       lng: coords?.lng,
+      thumbnail: thumbnail ?? undefined,
       recommendedDishes: [],
       createdAt: new Date().toISOString(),
     });
@@ -62,6 +65,7 @@ export function AddCustomPlaceSheet({ open, onClose, cityRef, cityCoords }: AddC
     setDescription("");
     setAddress("");
     setCoords(null);
+    setThumbnail(null);
     onClose();
   };
 
@@ -69,6 +73,7 @@ export function AddCustomPlaceSheet({ open, onClose, cityRef, cityCoords }: AddC
     <Modal open={open} onClose={resetAndClose} title={step === "form" ? "Add Place" : "Mark Location"}>
       {step === "form" ? (
         <div className="space-y-4">
+          <ThumbnailPicker value={thumbnail} onChange={setThumbnail} />
           <div>
             <label className="text-xs font-medium text-text-secondary mb-1 block">Place Name</label>
             <input

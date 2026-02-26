@@ -24,6 +24,13 @@ class VietnamTravelDB extends Dexie {
       customCities: "++id, createdAt",
       customPlaces: "++id, customCityId, cityId",
     });
+    this.version(3).stores({
+      trips: "++id, createdAt",
+      dayPlans: "++id, tripId, dayNumber",
+      placeVisits: "++id, dayPlanId, placeId, orderIndex",
+      customCities: "++id, createdAt",
+      customPlaces: "++id, customCityId, cityId",
+    });
   }
 }
 

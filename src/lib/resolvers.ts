@@ -20,6 +20,7 @@ export interface ResolvedCity {
   description: string;
   gradientIndex: number;
   imageAsset: string | null;
+  thumbnail: string | null;
   isCustom: boolean;
   customId?: number;
   lat?: number;
@@ -36,6 +37,7 @@ export interface ResolvedPlace {
   rating: number | null;
   priceLevel: number | null;
   recommendedDishes: string[];
+  thumbnail: string | null;
   isCustom: boolean;
   customId?: number;
   lat?: number;
@@ -51,6 +53,7 @@ export function resolveStaticCity(city: City): ResolvedCity {
     description: city.description,
     gradientIndex: city.gradientIndex,
     imageAsset: city.imageAsset,
+    thumbnail: null,
     isCustom: false,
     lat: coords?.lat,
     lng: coords?.lng,
@@ -65,6 +68,7 @@ export function resolveCustomCityObj(cc: CustomCity): ResolvedCity {
     description: cc.cityDescription,
     gradientIndex: cc.id! % 10,
     imageAsset: null,
+    thumbnail: cc.thumbnail ?? null,
     isCustom: true,
     customId: cc.id,
     lat: cc.lat,
@@ -94,6 +98,7 @@ export function resolveStaticPlace(place: Place): ResolvedPlace {
     rating: place.rating,
     priceLevel: place.priceLevel,
     recommendedDishes: place.recommendedDishes,
+    thumbnail: null,
     isCustom: false,
     lat: coords?.lat,
     lng: coords?.lng,
@@ -114,6 +119,7 @@ export function resolveCustomPlaceObj(cp: CustomPlace): ResolvedPlace {
     rating: null,
     priceLevel: null,
     recommendedDishes: cp.recommendedDishes,
+    thumbnail: cp.thumbnail ?? null,
     isCustom: true,
     customId: cp.id,
     lat: cp.lat,
