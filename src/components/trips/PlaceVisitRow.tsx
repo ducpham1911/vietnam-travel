@@ -15,9 +15,11 @@ interface PlaceVisitRowProps {
   isLast: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onToggleVisited?: (id: number | string, isVisited: boolean) => void;
+  onDelete?: (id: number | string) => void;
 }
 
-export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown }: PlaceVisitRowProps) {
+export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, onToggleVisited, onDelete }: PlaceVisitRowProps) {
   const place = useLiveQuery(() => resolvePlaceRef(visit.placeId), [visit.placeId]);
 
   if (!place) return null;
@@ -63,7 +65,11 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown }: 
             {/* Actions */}
             <div className="flex items-center gap-1">
               <button
-                onClick={() => updatePlaceVisit(visit.id!, { isVisited: !visit.isVisited })}
+                onClick={() =>
+                  onToggleVisited
+                    ? onToggleVisited(visit.id!, !visit.isVisited)
+                    : updatePlaceVisit(visit.id!, { isVisited: !visit.isVisited })
+                }
                 className="p-1"
               >
                 {visit.isVisited ? (
@@ -79,7 +85,9 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown }: 
                 <ChevronDown size={16} className="text-text-secondary" />
               </button>
               <button
-                onClick={() => deletePlaceVisit(visit.id!)}
+                onClick={() =>
+                  onDelete ? onDelete(visit.id!) : deletePlaceVisit(visit.id!)
+                }
                 className="p-1"
               >
                 <Trash2 size={14} className="text-red-400/60" />

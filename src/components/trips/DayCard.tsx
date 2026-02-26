@@ -7,16 +7,17 @@ import { formatDate } from "@/lib/utils";
 
 interface DayCardProps {
   dayPlan: DayPlan;
-  tripId: number;
+  tripId: number | string;
   placeCount: number;
   visitedCount: number;
+  href?: string;
 }
 
-export function DayCard({ dayPlan, tripId, placeCount, visitedCount }: DayCardProps) {
+export function DayCard({ dayPlan, tripId, placeCount, visitedCount, href }: DayCardProps) {
   const hasPlaces = placeCount > 0;
 
   return (
-    <Link href={`/trips/${tripId}/days/${dayPlan.dayNumber}`} className="block">
+    <Link href={href ?? `/trips/${tripId}/days/${dayPlan.dayNumber}`} className="block">
       <div className="card-style flex items-center gap-3 p-3">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${

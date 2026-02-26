@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,8 +39,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
       </head>
       <body className={`${inter.variable} antialiased bg-dark-bg text-white`}>
-        <main className="pb-20 min-h-dvh">{children}</main>
-        <BottomNav />
+        <AuthProvider>
+          <main className="pb-20 min-h-dvh">{children}</main>
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

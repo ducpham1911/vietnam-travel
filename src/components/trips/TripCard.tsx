@@ -9,16 +9,21 @@ import { formatDateRange, daysBetween } from "@/lib/utils";
 
 interface TripCardProps {
   trip: TripPlan;
+  href?: string;
+  badge?: React.ReactNode;
 }
 
-export function TripCard({ trip }: TripCardProps) {
+export function TripCard({ trip, href, badge }: TripCardProps) {
   const numDays = daysBetween(trip.startDate, trip.endDate);
   const cities = trip.cityIds.map(getCityById).filter(Boolean);
 
   return (
-    <Link href={`/trips/${trip.id}`} className="block">
+    <Link href={href ?? `/trips/${trip.id}`} className="block">
       <div className="card-style p-4">
-        <h3 className="text-base font-semibold mb-2">{trip.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-semibold mb-2">{trip.name}</h3>
+          {badge}
+        </div>
         <div className="flex items-center gap-2 mb-3">
           <Calendar size={13} className="text-text-secondary" />
           <span className="text-xs text-text-secondary">
