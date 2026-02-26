@@ -1,0 +1,77 @@
+"use client";
+
+import { useState } from "react";
+import { Modal } from "@/components/ui/Modal";
+import { createCustomCity } from "@/db/hooks";
+
+interface AddCustomCitySheetProps {
+  open: boolean;
+  onClose: () => void;
+  prefillName?: string;
+}
+
+export function AddCustomCitySheet({ open, onClose, prefillName = "" }: AddCustomCitySheetProps) {
+  const [name, setName] = useState(prefillName);
+  const [region, setRegion] = useState("Vietnam");
+  const [description, setDescription] = useState("");
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    await createCustomCity({
+      name: name.trim(),
+      region: region.trim() || "Vietnam",
+      cityDescription: description.trim(),
+      createdAt: new Date().toISOString(),
+    });
+    setName("");
+    setRegion("Vietnam");
+    setDescription("");
+    onClose();
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Add Custom City">
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs font-medium text-text-secondary mb-1 block">City Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Cần Thơ"
+            className="w-full rounded-xl bg-surface-bg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-brand-gold/50"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-text-secondary mb-1 block">Region</label>
+          <input
+            type="text"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            placeholder="Vietnam"
+            className="w-full rounded-xl bg-surface-bg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-brand-gold/50"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-text-secondary mb-1 block">
+            Description (optional)
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Tell us about this city..."
+            rows={3}
+            className="w-full rounded-xl bg-surface-bg px-3 py-2.5 text-sm outline-none resize-none focus:ring-1 focus:ring-brand-gold/50"
+          />
+        </div>
+        <button
+          onClick={handleCreate}
+          disabled={!name.trim()}
+          className="w-full rounded-xl bg-brand-teal py-3 text-sm font-semibold disabled:opacity-40"
+        >
+          Add City
+        </button>
+      </div>
+    </Modal>
+  );
+}
