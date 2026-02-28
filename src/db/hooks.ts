@@ -51,8 +51,9 @@ function useRealtimeQuery<T>(
     if (!realtimeConfig) return;
 
     const supabase = getSupabaseBrowserClient();
+    const channelName = `realtime-${realtimeConfig.table}-${realtimeConfig.filter ?? "all"}`;
     const channel = supabase
-      .channel(`realtime-${realtimeConfig.table}-${realtimeConfig.filter ?? "all"}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -65,7 +66,15 @@ function useRealtimeQuery<T>(
           refetch();
         }
       )
-      .subscribe();
+      .subscribe((status: string, err: Error | undefined) => {
+        if (status === "CHANNEL_ERROR") {
+          console.error(`[Realtime] Channel error on ${channelName}:`, err);
+        }
+        if (status === "TIMED_OUT") {
+          console.warn(`[Realtime] Subscription timed out on ${channelName}, retrying...`);
+          channel.subscribe();
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -157,7 +166,10 @@ export function useDayPlan(
         .single();
       return data;
     },
-    [tripId, dayNumber]
+    [tripId, dayNumber],
+    tripId && dayNumber !== undefined
+      ? { table: "day_plans", filter: `trip_id=eq.${tripId}` }
+      : undefined
   );
 
   return data ?? undefined;
@@ -207,7 +219,8 @@ export function useTripMembers(tripId: string | undefined): TripMember[] {
         profile: m.profile as TripMember["profile"],
       })) as TripMember[];
     },
-    [tripId]
+    [tripId],
+    tripId ? { table: "trip_members", filter: `trip_id=eq.${tripId}` } : undefined
   );
 
   return data ?? [];

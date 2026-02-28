@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronUp, ChevronDown, Trash2, Circle, CheckCircle } from "lucide-react";
 import { PlaceVisit } from "@/types/trip";
 import { getCategoryConfig } from "@/data/categories";
@@ -18,6 +19,7 @@ interface PlaceVisitRowProps {
 }
 
 export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, onToggleVisited, onDelete }: PlaceVisitRowProps) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const place = useResolvePlaceRef(visit.place_id);
 
   if (!place) return null;
@@ -82,14 +84,33 @@ export function PlaceVisitRow({ visit, isFirst, isLast, onMoveUp, onMoveDown, on
               <button onClick={onMoveDown} disabled={isLast} className="p-1 disabled:opacity-20">
                 <ChevronDown size={16} className="text-text-secondary" />
               </button>
-              <button
-                onClick={() =>
-                  onDelete ? onDelete(visit.id) : deletePlaceVisit(visit.id)
-                }
-                className="p-1"
-              >
-                <Trash2 size={14} className="text-red-400/60" />
-              </button>
+              {confirmingDelete ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-red-400">Remove?</span>
+                  <button
+                    onClick={() => {
+                      onDelete ? onDelete(visit.id) : deletePlaceVisit(visit.id);
+                      setConfirmingDelete(false);
+                    }}
+                    className="rounded-md bg-red-500/20 px-2 py-0.5 text-[11px] font-medium text-red-400"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setConfirmingDelete(false)}
+                    className="rounded-md bg-surface-bg px-2 py-0.5 text-[11px] font-medium text-text-secondary"
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="p-1"
+                >
+                  <Trash2 size={14} className="text-red-400/60" />
+                </button>
+              )}
             </div>
           </div>
 

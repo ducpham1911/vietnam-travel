@@ -66,7 +66,7 @@ export function LocationPickerMap({ value, onChange, initialCenter }: LocationPi
       <p className="mb-2 text-xs text-text-secondary">
         Tap on the map or enter coordinates below
       </p>
-      <div className="h-64 w-full overflow-hidden rounded-xl">
+      <div className="h-64 w-full overflow-hidden rounded-xl" data-vaul-no-drag>
         <Map
           ref={mapRef}
           initialViewState={{

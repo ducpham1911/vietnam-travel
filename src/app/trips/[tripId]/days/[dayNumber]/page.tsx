@@ -18,7 +18,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useTrip, useDayPlan, usePlaceVisits, reorderVisits } from "@/db/hooks";
+import { useTrip, useDayPlan, usePlaceVisits, reorderVisits, deletePlaceVisit } from "@/db/hooks";
 import { formatDate } from "@/lib/utils";
 import { PlaceVisitRow } from "@/components/trips/PlaceVisitRow";
 import { AddPlaceToDaySheet } from "@/components/sheets/AddPlaceToDaySheet";
@@ -32,12 +32,14 @@ function SortableVisitItem({
   total,
   onMoveUp,
   onMoveDown,
+  onDelete,
 }: {
   visit: PlaceVisit;
   index: number;
   total: number;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onDelete: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: visit.id,
@@ -67,6 +69,7 @@ function SortableVisitItem({
             isLast={index === total - 1}
             onMoveUp={onMoveUp}
             onMoveDown={onMoveDown}
+            onDelete={onDelete}
           />
         </div>
       </div>
@@ -79,8 +82,15 @@ export default function DayPlanPage() {
   const numDay = Number(dayNumber);
   const trip = useTrip(tripId);
   const dayPlan = useDayPlan(tripId, numDay);
-  const visits = usePlaceVisits(dayPlan?.id);
+  const allVisits = usePlaceVisits(dayPlan?.id);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const visits = allVisits.filter((v) => !deletedIds.has(v.id));
   const [showAdd, setShowAdd] = useState(false);
+
+  const handleDelete = async (id: string) => {
+    setDeletedIds((prev) => new Set(prev).add(id));
+    await deletePlaceVisit(id);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -173,6 +183,7 @@ export default function DayPlanPage() {
                       total={visits.length}
                       onMoveUp={() => handleMove(i, "up")}
                       onMoveDown={() => handleMove(i, "down")}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </div>

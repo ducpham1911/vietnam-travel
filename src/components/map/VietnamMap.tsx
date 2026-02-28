@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Map, { Marker, type MapRef } from "react-map-gl/maplibre";
+import Map, { Marker, Popup, type MapRef } from "react-map-gl/maplibre";
+import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cities, getCityById } from "@/data/cities";
 import { getPlacesByCity } from "@/data/places";
@@ -23,6 +24,7 @@ const CITY_ZOOM = 14;
 export function VietnamMap() {
   const mapRef = useRef<MapRef>(null);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+  const [activeCustomPlaceId, setActiveCustomPlaceId] = useState<string | null>(null);
 
   const customCities = useCustomCities();
   const customCityId = selectedCityId && isCustomCityRef(selectedCityId)
@@ -154,6 +156,10 @@ export function VietnamMap() {
                   longitude={cp.lng!}
                   latitude={cp.lat!}
                   anchor="center"
+                  onClick={(e) => {
+                    e.originalEvent.stopPropagation();
+                    setActiveCustomPlaceId(cp.id);
+                  }}
                 >
                   <div
                     className="w-3 h-3 rounded-full border-2 border-white cursor-pointer"
@@ -161,11 +167,50 @@ export function VietnamMap() {
                       background: color,
                       boxShadow: `0 0 6px ${color}80, 0 1px 4px rgba(0,0,0,0.3)`,
                     }}
-                    title={cp.name}
                   />
                 </Marker>
               );
             })}
+
+        {/* Popup for active custom place */}
+        {activeCustomPlaceId && (() => {
+          const cp = customPlaces.find((p) => p.id === activeCustomPlaceId);
+          if (!cp || !cp.lat || !cp.lng) return null;
+          const color = getCategoryColor(cp.category_raw_value as PlaceCategory);
+          const config = getCategoryConfig(cp.category_raw_value as PlaceCategory);
+          const resolved = resolveCustomPlaceObj(cp);
+          return (
+            <Popup
+              longitude={cp.lng}
+              latitude={cp.lat}
+              anchor="bottom"
+              offset={10}
+              closeOnClick={false}
+              onClose={() => setActiveCustomPlaceId(null)}
+              className="map-popup"
+            >
+              <div className="min-w-[180px]">
+                <h3 className="text-sm font-semibold text-white mb-1">
+                  {cp.name}
+                </h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
+                    style={{ background: color }}
+                  >
+                    {config.label}
+                  </span>
+                </div>
+                <Link
+                  href={`/discover/${selectedCityId}/places/${resolved.id}`}
+                  className="inline-block text-xs font-medium text-brand-gold hover:underline"
+                >
+                  View Details →
+                </Link>
+              </div>
+            </Popup>
+          );
+        })()}
       </Map>
 
       {selectedCityId && (

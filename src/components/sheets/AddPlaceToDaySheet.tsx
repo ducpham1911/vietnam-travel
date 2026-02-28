@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Plus } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { CategoryChip } from "@/components/discover/CategoryChip";
 import { getCategoryConfig } from "@/data/categories";
@@ -10,6 +10,8 @@ import { addPlaceVisit, usePlacesForCityRef } from "@/db/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { ResolvedPlace } from "@/lib/resolvers";
 import { PlaceCategory } from "@/types/city";
+import { AddCustomPlaceSheet } from "./AddCustomPlaceSheet";
+import { cityCoordinates } from "@/data/coordinates";
 
 interface AddPlaceToDaySheetProps {
   open: boolean;
@@ -34,6 +36,7 @@ export function AddPlaceToDaySheet({
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [selectedDishes, setSelectedDishes] = useState<string[]>([]);
+  const [showCustomPlace, setShowCustomPlace] = useState(false);
 
   // Gather places from all city refs (static + custom)
   const city0Places = usePlacesForCityRef(cityIds[0] ?? "");
@@ -85,6 +88,7 @@ export function AddPlaceToDaySheet({
     setSelectedCategory(null);
     setUseTime(false);
     setSelectedDishes([]);
+    setShowCustomPlace(false);
     onClose();
   };
 
@@ -95,6 +99,7 @@ export function AddPlaceToDaySheet({
   };
 
   return (
+    <>
     <Modal open={open} onClose={resetAndClose} title={step === "select" ? "Add Place" : "Configure"}>
       {step === "select" ? (
         <div>
@@ -119,6 +124,20 @@ export function AddPlaceToDaySheet({
               />
             ))}
           </div>
+
+          {/* Create custom place button */}
+          <button
+            onClick={() => setShowCustomPlace(true)}
+            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-surface-bg p-3 text-left mb-2"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/20">
+              <Plus size={16} className="text-brand-gold" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-brand-gold">Create Custom Place</p>
+              <p className="text-[10px] text-text-tertiary">Add a place not in the list</p>
+            </div>
+          </button>
 
           {/* Place list */}
           <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
@@ -230,5 +249,13 @@ export function AddPlaceToDaySheet({
         </div>
       )}
     </Modal>
+
+    <AddCustomPlaceSheet
+      open={showCustomPlace}
+      onClose={() => setShowCustomPlace(false)}
+      cityRef={cityIds[0] ?? ""}
+      cityCoords={cityCoordinates[cityIds[0]] ?? undefined}
+    />
+    </>
   );
 }
